@@ -2,12 +2,17 @@
 	.align 0
 welcome:.asciz "-----------Vamos começar o Jogo-----------"
 menu:   .asciz "\n\nComo jogar:\n1-Adiconar vagão no início\n2-Adiconar vagão no final\n3-Remover vagão por ID\n4-Listar trem\n5-Buscar vagão\n6-Sair\nDigite sua escolha: "
-error:	.asciz "\nErro ao processar input\n"
-press:	.asciz "Pressiona qualquer tecla para continuar: "
-miss:	.asciz "\nID não encontrado!\n"
+error:	.asciz "\nErro ao processar input"
+press:	.asciz "\nPressiona qualquer tecla para continuar: "
+miss:	.asciz "\nID não encontrado!"
 types:	.asciz "\n1-Locomotiva\n2-Carga\n3-Passageiro\n4-Combustível\nDigite o tipo do vagão: "
 idSeek:	.asciz "\nDigite o ID desejado para a procura: "
 goodbye:.asciz "-----------Obrigado por jogar!-----------"
+found:	.asciz "\n-----------Encontrado------------\nTipo: "
+cargo:	.asciz "Carga"
+fuel:	.asciz "Combustível"
+passeng:.asciz "Passageiro"
+locomot:.asciz "Locomotiva"
 
 	.text
 	.align 2
@@ -20,13 +25,13 @@ main:
 	addi s1, zero, -1
 	sw s1, 0(s0) #A cabeça começa com o ID -1, ela não poderá ser acessada pelo usuário
 	sw s1, 4(s0) # O tipo da cabeça é -1 também
-	addi s1, zero, 1
+	addi s1, s1, 1
 	sw s0, 8(s0) #lista circular
 	la a0, welcome
 	addi a7, zero, 4 #imprime o valor de Welcome na tela
 	ecall
 
-game:   lw s3, 8(s0)
+game:   add s3, zero, s0
 	la a0, menu #Carrega o menu para o usuário
 	addi a7, zero, 4
 	ecall
@@ -62,7 +67,7 @@ case1:
 	addi a7, zero, 9
 	ecall
 	sw s1, 0(a0)#ID do novo item
-	addi, s1, zero, 1 #Aumento o contador do id
+	addi s1, s1, 1 #Aumento o contador do id
 	sw s2, 4(a0)#Tipo do novo item
 	lw t0, 8(s0) #Agora o novo item aponta para o endereço que aponta s0
 	sw t0, 8(a0)
@@ -89,12 +94,33 @@ seek:	lw s3, 8(s3)
 	beq s0, s3, noID
 	lw t0, 0(s3)
 	bne t0, a0, seek
-	lw a0, 0(s3)
-	addi a7, zero, 1
-	lw a0, 4(s3)
-	addi a7, zero, 1
-	j game
-	
+	la a0, found
+	addi a7, zero, 4
+	ecall
+	lw s4, 4(s3)
+	addi t1, zero, 1
+	bne t1, s4, load
+	la a0, locomot
+	addi a7, zero, 4
+	ecall
+	j print
+load:	addi t1, zero, 2
+	bne s4, t1, person
+	la a0, cargo
+	addi a7, zero, 4
+	ecall
+	j print
+person:	addi t1, zero, 3
+	bne s4, t1, gas
+	la a0, passeng
+	addi a7, zero, 4
+	ecall
+	j print
+gas:	la a0, fuel
+	addi a7, zero, 4
+	ecall
+	j print
+
 #Encerra o programa
 case6:	la a0, goodbye
 	addi a7, zero, 4
@@ -105,17 +131,19 @@ case6:	la a0, goodbye
 errorM:	la a0, error#Imprime mensagem de erro
 	addi a7, zero, 4
 	ecall
+	j print
+
+noID:	la a0, miss
+	addi a7, zero, 4
+	ecall
 	la a0, press
 	addi a7, zero, 4
 	ecall
 	addi a7, zero, 12
 	ecall
 	j game
-
-noID:	la a0, miss
-	addi a7, zero, 4
-	ecall
-	la a0, press
+	
+print:	la a0, press
 	addi a7, zero, 4
 	ecall
 	addi a7, zero, 12
