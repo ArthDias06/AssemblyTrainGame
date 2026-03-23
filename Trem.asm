@@ -4,7 +4,7 @@
 #Gabriel Carraro Salzedas - 16827905
 
 
-#Descrição dos registradosres usados
+#Descrição dos registradores usados
 #s0 - Armazenamento do endereço da cabeça da lista
 #s1 - registrador contendo o próximo ID
 #s2 - Registrador usado na inserção no início
@@ -17,6 +17,8 @@
 #t3 - Armazena o valor do ID do próximo nó para saber se ele será removido e armazena o valor do nó próximo de t2 para passar para o s3
 	.data
 	.align 0
+	
+#Definição das strings usadas para melhora do ambiente
 welcome:.asciz "-----------Vamos começar o Jogo-----------"
 menu:   .asciz "\n\nComo jogar:\n1-Adiconar vagão no início\n2-Adiconar vagão no final\n3-Remover vagão por ID\n4-Listar trem\n5-Buscar vagão\n6-Sair\nDigite sua escolha: "
 error:	.asciz "\nErro ao processar input"
@@ -40,30 +42,42 @@ wagon:	.asciz "\n\nVagão "
 	.align 2
 	.globl main
 main:
-	addi a0, zero, 12 # Serão alocados 12 bytes(4 para cada campo)
-	addi a7, zero, 9 #Alocação de memória na heap, criando a cabeça da lista ligada
+	# Serão alocados 12 bytes(4 para cada campo)
+	addi a0, zero, 12
+	#Alocação de memória na heap, criando a cabeça da lista ligada
+	addi a7, zero, 9
 	ecall
-	add s0, zero, a0 #Passa o conteúdo de a0 para s0
+	#s0 aponta para a cabeça do trem
+	add s0, zero, a0
 	addi s1, zero, -1
-	sw s1, 0(s0) #A cabeça começa com o ID -1, ela não poderá ser acessada pelo usuário
-	sw s1, 4(s0) # O tipo da cabeça é -1 também
+	#A cabeça começa com o ID -1, ela não poderá ser acessada pelo usuário
+	sw s1, 0(s0)
+	# O tipo da cabeça é -1 também
+	sw s1, 4(s0)
 	addi s1, s1, 1
-	sw s0, 8(s0) #lista circular
+	#lista circular
+	sw s0, 8(s0)
+	#Início da UI do jogo
 	la a0, welcome
-	addi a7, zero, 4 #imprime o valor de Welcome na tela
-	ecall
-
-game:   add s3, zero, s0
-	la a0, menu #Carrega o menu para o usuário
 	addi a7, zero, 4
 	ecall
-	addi a7, zero, 5 #Lê input do usuário
+
+game:	#s3 servirá para percorrer a lista em diversas situações, sempre ao voltar ele volta a apontar para o nó cabeça
+	add s3, zero, s0
+	#Carrega o menu para o usuário
+	la a0, menu
+	addi a7, zero, 4
+	ecall
+	#Lê input do usuário
+	addi a7, zero, 5
 	ecall
 	addi t0, zero, 1
-	blt a0, t0, errorM #Se input menor que 1 printa mensagem de erro
+	#Se input menor que 1 printa mensagem de erro
+	blt a0, t0, errorM
 	beq a0, t0, case1
 	addi t0, zero, 6
-	bgt a0, t0, errorM #Se input maior que 1 printa mensagem de erro
+	#Se input maior que 6 printa mensagem de erro
+	bgt a0, t0, errorM
 	beq a0, t0, case6
 	addi t0, zero, 2
 	beq a0, t0, case2
@@ -73,124 +87,179 @@ game:   add s3, zero, s0
 	beq a0, t0, case4
 	addi t0, zero, 5
 	beq a0, t0, case5
+
 #Adiciona vagão no início
 case1:
-	la a0, types#Print do menu
+	#Print do menu
+	la a0, types
 	addi a7, zero, 4
 	ecall
-	addi a7, zero, 5#Recebimento do input do usuário
+	#Recebimento do input do usuário
+	addi a7, zero, 5
 	ecall
 	addi t0, zero, 1
+	#Se o input for menor que 1 dá erro
 	blt a0, t0, errorM
 	addi t0, zero, 4
+	#Se o input for maior que 4 dá erro
 	bgt a0, t0, errorM
 	add s2, zero, a0
-	addi a0, zero, 12#Alocação da memória
+	addi a0, zero, 12
+	#Alocação de memória do novo nó
 	addi a7, zero, 9
 	ecall
-	sw s1, 0(a0)#ID do novo item
-	addi s1, s1, 1 #Aumento o contador do id
+	#ID do novo item
+	sw s1, 0(a0)
+	#Aumento o contador do id
+	addi s1, s1, 1
 	addi t0, zero, 1
+	#Se a inserção for no final o código é redirecionado a partir do valor da flag s5
 	beq s5, t0, return
-	sw s2, 4(a0)#Tipo do novo item
-	lw t0, 8(s0) #Agora o novo item aponta para o endereço que aponta s0
+	#Tipo do novo item
+	sw s2, 4(a0)
+	#Agora o novo item aponta para o endereço que apontava s0
+	lw t0, 8(s0)
 	sw t0, 8(a0)
-	sw a0, 8(s0) #s0 aponta para o endereço do novo item
+	#s0 aponta para o endereço do novo item
+	sw a0, 8(s0)
+	#Retorna para o menu do jogo
 	j game
+
 #Adiciona vagão no final
 case2:
-	lw s3, 8(s3)
+	lw s3, 8(s3) #Percorre a lista
 	lw t0, 8(s3)
+	#Verifica se a lista chegou no final
 	bne s0, t0, case2
+	#s5 serve de flag para saber que a inserção é no final
 	addi s5, zero, 1
+	#Vai ao case1 para coleta de informações e criação do nó
 	j case1
-return:	addi s5, zero, 0 #Sempre que ele voltar para listing precisa resetar para não continuar listando caso a busca ou a inserção no início seja chamada após essa instrução
+	#Sempre que ele voltar para listing precisa resetar para não continuar listando caso a busca ou a inserção no início seja chamada após essa instrução
+return:	addi s5, zero, 0
+	#Armazenamento de informações no novo nó
 	sw s2, 4(a0)
 	sw a0, 8(s3)
 	sw s0, 8(a0)
+	#Retorno ao menu do jogo
 	j game
+
 #Remove vagão por ID
 case3:
 	la a0, idKill
 	addi a7, zero, 4
 	ecall
+	#Lê valor do ID que será removido
 	addi a7, zero, 5
 	ecall
+	#Se o ID for menor que 0 ele é inválido
 	blt a0, zero, errorM
+	#t2 aponta para o próximo nó
 check:	lw t2, 8(s3)
+	#t3 contém o ID do próximo nó
 	lw t3, 0(t2)
+	#Se o ID do próximo nó for igual ao ID ele remove
 	beq t3, a0, remove
+	#Se o ID for diferente s3 vai para o próximo nó
 	lw s3, 8(s3)
+	#Se s3 for igual a s0 ele deu uma volta completa na lista, então o ID não existe
 	beq s3, s0, noID
+	#Volta para checar o novo nó atingido
 	j check
 remove:	lw t3, 8(t2)
+	#O nó atual aponta para o nó que t2 apontava
 	sw t3, 8(s3)
+	#t3 contém 0
 	addi t3, zero, 0
+	#t2 aponta para NULL
 	sw t3, 8(t2)
+	#Retorno ao menu do jogo
 	j game
 	
 #Listar todos os vagões
 case4:
+	#Inicia o contador de vagões
 	addi s4, zero, 1
 	la a0, list
 	addi a7, zero, 4
 	ecall
 listing:addi s5, zero, 0
+	#s3 percorre a lista
 	lw s3, 8(s3)
+	#Se s0 = s3 ele deu uma volta e terminou a listagem
 	beq s0, s3, print
+	#Print do número do vagão atual
 	la a0, wagon
 	addi a7, zero, 4
 	ecall
 	add a0, zero, s4
 	addi a7, zero, 1
 	ecall
+	#Aumenta o número do vagão para a próxima vez
 	addi s4, s4, 1
+	#Print do ID do vagão
 	la a0, idPrint
 	addi a7, zero, 4
 	ecall
 	lw a0, 0(s3)
 	addi a7, zero, 1
 	ecall
+	#Print do tipo do vagão
 	la a0, tyPrint
 	addi a7, zero, 4
 	ecall
+	#Uso de s5 como flag para mostrar o nome do tipo a partir do código
 	addi s5, zero, 1
+	#Vai para o local de print do tipo do vagão
 	j type
+	
 #Busca pelo ID
 case5:
+	#Contador do número de vagão
 	addi s4, zero, 0
 	la a0, idSeek
 	addi a7, zero, 4
 	ecall
 	addi a7, zero, 5
 	ecall
+	#Se o ID menor que 0 é inválido
 	blt a0, zero, errorM
+	#Percorre a lista
 seek:	lw s3, 8(s3)
 	beq s0, s3, noID
+	#Aumento do contador do vagão
 	addi s4, s4, 1
 	lw t0, 0(s3)
+	#Se o ID atual for diferente do procurado ele continua a procura
 	bne t0, a0, seek
+	#Se os IDs forem iguais ele mostra as informações
 	la a0, found
 	addi a7, zero, 4
 	ecall
+	#Print do número do vagão
 	la a0, wagon
 	addi a7, zero, 4
 	ecall
 	add a0, zero, s4
 	addi a7, zero, 1
 	ecall
+	#Print do tipo do vagão
 	la a0, tyPrint
 	addi a7, zero, 4
 	ecall
+	#Print do tipo por extenso de acordo com o código
+	#Print do tipo locomotiva
 type:	lw t1, 4(s3)
 	addi t0, zero, 1
 	bne t0, t1, load
 	la a0, locomot
 	addi a7, zero, 4
 	ecall
+	#Se s5 for 1 ele estava no processo de listagem, então ele volta para lá
 	addi t0, zero, 1
 	beq t0, s5, listing
 	j print
+	#Print do tipo Carga
 load:	addi t0, zero, 2
 	bne t1, t0, person
 	la a0, cargo
@@ -199,6 +268,7 @@ load:	addi t0, zero, 2
 	addi t0, zero, 1
 	beq t0, s5, listing
 	j print
+	#Print do tipo passageiro
 person:	addi t0, zero, 3
 	bne t1, t0, gas
 	la a0, passeng
@@ -207,6 +277,7 @@ person:	addi t0, zero, 3
 	addi t0, zero, 1
 	beq t0, s5, listing
 	j print
+	#Print do tipo combustível
 gas:	la a0, fuel
 	addi a7, zero, 4
 	ecall
@@ -218,27 +289,27 @@ gas:	la a0, fuel
 case6:	la a0, goodbye
 	addi a7, zero, 4
 	ecall
+	#Término da execução
 	addi a7, zero, 10
 	ecall
-	
-errorM:	la a0, error#Imprime mensagem de erro
+
+#Imprime mensagem de erro
+errorM:	la a0, error
 	addi a7, zero, 4
 	ecall
 	j print
 
+#Imprime mensagem caso ID pedido não exista
 noID:	la a0, miss
 	addi a7, zero, 4
 	ecall
-	la a0, press
-	addi a7, zero, 4
-	ecall
-	addi a7, zero, 12
-	ecall
-	j game
-	
+	j print
+
+#Mensagem base para o usuário apertar uma tecla para continuar
 print:	la a0, press
 	addi a7, zero, 4
 	ecall
+	#Recebe um char do usuário para ele continuar a execução
 	addi a7, zero, 12
 	ecall
 	j game
