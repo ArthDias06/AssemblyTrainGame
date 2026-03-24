@@ -156,9 +156,11 @@ case4:
 listing:lw s3, 8(s3)
 	#Se s0 = s3 ele deu uma volta e terminou a listagem
 	beq s0, s3, print
-	jal sp, putInfo
+	#Vai para a função de printar informações do vagão
+	jal ra, putInfo
 	#Aumento do contador do vagão
 	addi s4, s4, 1
+	#Retorna para a listagem
 	j listing
 
 #Busca pelo ID
@@ -184,7 +186,7 @@ seek:	lw s3, 8(s3)
 	la a0, found
 	addi a7, zero, 4
 	ecall
-	jal sp, putInfo
+	jal ra, putInfo
 	j print
 
 #Encerra o programa
@@ -220,9 +222,27 @@ setInfo:#Print do menu de tipos
 	addi s1, s1, 1
 	jr ra
 
-#Função print do tipo por extenso de acordo com o código
+#Print das informações do vagão
+putInfo:la a0, wagon
+	addi a7, zero, 4
+	ecall
+	add a0, zero, s4
+	addi a7, zero, 1
+	ecall
+	#Print do ID do vagão
+	la a0, idPrint
+	addi a7, zero, 4
+	ecall
+	lw a0, 0(s3)
+	addi a7, zero, 1
+	ecall
+	#Print do tipo do vagão
+	la a0, tyPrint
+	addi a7, zero, 4
+	ecall
+	#Print do tipo por extenso
 	#Print do tipo locomotiva
-type:	lw t1, 4(s3)
+	lw t1, 4(s3)
 	addi t0, zero, 1
 	bne t0, t1, load
 	la a0, locomot
@@ -248,27 +268,6 @@ gas:	la a0, fuel
 	addi a7, zero, 4
 	ecall
 	jr ra
-
-#Print das informações do vagão
-putInfo:la a0, wagon
-	addi a7, zero, 4
-	ecall
-	add a0, zero, s4
-	addi a7, zero, 1
-	ecall
-	#Print do ID do vagão
-	la a0, idPrint
-	addi a7, zero, 4
-	ecall
-	lw a0, 0(s3)
-	addi a7, zero, 1
-	ecall
-	#Print do tipo do vagão
-	la a0, tyPrint
-	addi a7, zero, 4
-	ecall
-	jal ra, type
-	jr sp
 
 #Imprime mensagem de erro
 errorM:	la a0, error
