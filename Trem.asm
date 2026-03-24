@@ -10,7 +10,6 @@
 #s2 - Registrador usado na inserção no início
 #s3 - Registrador usado para percorrer a lista
 #s4 - Armazena o contador do vagão na listagem e na busca
-#s5 - flag para saber se o novo vagão entra no início ou no fim e para saber se o tipo do vagão deve retornar para a busca ou para a listagem
 #t0 - usado para armazenar valor a ser comparado(nas instruções bne e beq)
 #t1 - Armazena o valor do tipo do vagão na busca
 #t2 - Verifica o próximo nó para saber se ele foi escolhido para ser removido
@@ -88,33 +87,9 @@ game:	#s3 servirá para percorrer a lista em diversas situações, sempre ao vol
 	addi t0, zero, 5
 	beq a0, t0, case5
 
+
 #Adiciona vagão no início
-case1:
-	#Print do menu
-	la a0, types
-	addi a7, zero, 4
-	ecall
-	#Recebimento do input do usuário
-	addi a7, zero, 5
-	ecall
-	addi t0, zero, 1
-	#Se o input for menor que 1 dá erro
-	blt a0, t0, errorM
-	addi t0, zero, 4
-	#Se o input for maior que 4 dá erro
-	bgt a0, t0, errorM
-	add s2, zero, a0
-	addi a0, zero, 12
-	#Alocação de memória do novo nó
-	addi a7, zero, 9
-	ecall
-	#ID do novo item
-	sw s1, 0(a0)
-	#Aumento o contador do id
-	addi s1, s1, 1
-	addi t0, zero, 1
-	#Se a inserção for no final o código é redirecionado a partir do valor da flag s5
-	beq s5, t0, return
+case1:	jal ra, setInfo
 	#Tipo do novo item
 	sw s2, 4(a0)
 	#Agora o novo item aponta para o endereço que apontava s0
@@ -131,13 +106,8 @@ case2:
 	lw t0, 8(s3)
 	#Verifica se a lista chegou no final
 	bne s0, t0, case2
-	#s5 serve de flag para saber que a inserção é no final
-	addi s5, zero, 1
 	#Vai ao case1 para coleta de informações e criação do nó
-	j case1
-	#Sempre que ele voltar para listing precisa resetar para não continuar listando caso a busca ou a inserção no início seja chamada após essa instrução
-return:	addi s5, zero, 0
-	#Armazenamento de informações no novo nó
+	jal ra, setInfo
 	sw s2, 4(a0)
 	sw a0, 8(s3)
 	sw s0, 8(a0)
@@ -175,7 +145,7 @@ remove:	lw t3, 8(t2)
 	sw t3, 8(t2)
 	#Retorno ao menu do jogo
 	j game
-	
+
 #Listar todos os vagões
 case4:
 	#Inicia o contador de vagões
@@ -183,36 +153,14 @@ case4:
 	la a0, list
 	addi a7, zero, 4
 	ecall
-listing:addi s5, zero, 0
-	#s3 percorre a lista
-	lw s3, 8(s3)
+listing:lw s3, 8(s3)
 	#Se s0 = s3 ele deu uma volta e terminou a listagem
 	beq s0, s3, print
-	#Print do número do vagão atual
-	la a0, wagon
-	addi a7, zero, 4
-	ecall
-	add a0, zero, s4
-	addi a7, zero, 1
-	ecall
-	#Aumenta o número do vagão para a próxima vez
+	jal sp, putInfo
+	#Aumento do contador do vagão
 	addi s4, s4, 1
-	#Print do ID do vagão
-	la a0, idPrint
-	addi a7, zero, 4
-	ecall
-	lw a0, 0(s3)
-	addi a7, zero, 1
-	ecall
-	#Print do tipo do vagão
-	la a0, tyPrint
-	addi a7, zero, 4
-	ecall
-	#Uso de s5 como flag para mostrar o nome do tipo a partir do código
-	addi s5, zero, 1
-	#Vai para o local de print do tipo do vagão
-	j type
-	
+	j listing
+
 #Busca pelo ID
 case5:
 	#Contador do número de vagão
@@ -236,53 +184,7 @@ seek:	lw s3, 8(s3)
 	la a0, found
 	addi a7, zero, 4
 	ecall
-	#Print do número do vagão
-	la a0, wagon
-	addi a7, zero, 4
-	ecall
-	add a0, zero, s4
-	addi a7, zero, 1
-	ecall
-	#Print do tipo do vagão
-	la a0, tyPrint
-	addi a7, zero, 4
-	ecall
-	#Print do tipo por extenso de acordo com o código
-	#Print do tipo locomotiva
-type:	lw t1, 4(s3)
-	addi t0, zero, 1
-	bne t0, t1, load
-	la a0, locomot
-	addi a7, zero, 4
-	ecall
-	#Se s5 for 1 ele estava no processo de listagem, então ele volta para lá
-	addi t0, zero, 1
-	beq t0, s5, listing
-	j print
-	#Print do tipo Carga
-load:	addi t0, zero, 2
-	bne t1, t0, person
-	la a0, cargo
-	addi a7, zero, 4
-	ecall
-	addi t0, zero, 1
-	beq t0, s5, listing
-	j print
-	#Print do tipo passageiro
-person:	addi t0, zero, 3
-	bne t1, t0, gas
-	la a0, passeng
-	addi a7, zero, 4
-	ecall
-	addi t0, zero, 1
-	beq t0, s5, listing
-	j print
-	#Print do tipo combustível
-gas:	la a0, fuel
-	addi a7, zero, 4
-	ecall
-	addi t0, zero, 1
-	beq t0, s5, listing
+	jal sp, putInfo
 	j print
 
 #Encerra o programa
@@ -292,6 +194,81 @@ case6:	la a0, goodbye
 	#Término da execução
 	addi a7, zero, 10
 	ecall
+
+#Função para criação do novo nó
+setInfo:#Print do menu de tipos
+	la a0, types
+	addi a7, zero, 4
+	ecall
+	#Recebimento do input do usuário
+	addi a7, zero, 5
+	ecall
+	addi t0, zero, 1
+	#Se o input for menor que 1 dá erro
+	blt a0, t0, errorM
+	addi t0, zero, 4
+	#Se o input for maior que 4 dá erro
+	bgt a0, t0, errorM
+	add s2, zero, a0
+	addi a0, zero, 12
+	#Alocação de memória do novo nó
+	addi a7, zero, 9
+	ecall
+	#ID do novo item
+	sw s1, 0(a0)
+	#Aumento o contador do id
+	addi s1, s1, 1
+	jr ra
+
+#Função print do tipo por extenso de acordo com o código
+	#Print do tipo locomotiva
+type:	lw t1, 4(s3)
+	addi t0, zero, 1
+	bne t0, t1, load
+	la a0, locomot
+	addi a7, zero, 4
+	ecall
+	jr ra
+	#Print do tipo Carga
+load:	addi t0, zero, 2
+	bne t1, t0, person
+	la a0, cargo
+	addi a7, zero, 4
+	ecall
+	jr ra
+	#Print do tipo passageiro
+person:	addi t0, zero, 3
+	bne t1, t0, gas
+	la a0, passeng
+	addi a7, zero, 4
+	ecall
+	jr ra
+	#Print do tipo combustível
+gas:	la a0, fuel
+	addi a7, zero, 4
+	ecall
+	jr ra
+
+#Print das informações do vagão
+putInfo:la a0, wagon
+	addi a7, zero, 4
+	ecall
+	add a0, zero, s4
+	addi a7, zero, 1
+	ecall
+	#Print do ID do vagão
+	la a0, idPrint
+	addi a7, zero, 4
+	ecall
+	lw a0, 0(s3)
+	addi a7, zero, 1
+	ecall
+	#Print do tipo do vagão
+	la a0, tyPrint
+	addi a7, zero, 4
+	ecall
+	jal ra, type
+	jr sp
 
 #Imprime mensagem de erro
 errorM:	la a0, error
