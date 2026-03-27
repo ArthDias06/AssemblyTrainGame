@@ -96,6 +96,7 @@ case1:	jal ra, setInfo
 
 #Adiciona vagão no final
 case2:
+	#t2 percorre a lista
 	add t2, zero, s0
 runList:#Percorre a lista
 	lw t2, 8(t2)
@@ -104,6 +105,7 @@ runList:#Percorre a lista
 	bne s0, t0, runList
 	#Vai ao setInfo para coleta de informações e criação do nó
 	jal ra, setInfo
+	#Ajuste dos ponteiros
 	sw a0, 8(t2)
 	sw s0, 8(a0)
 	#Retorno ao menu do jogo
@@ -175,9 +177,11 @@ case5:
 	blt a0, zero, errorM
 	#t1 é o contador de vagões
 	addi t1, zero, 0
+	#t2 percorre a lista
 	add t2, zero, s0
 	#Percorre a lista
 seek:	lw t2, 8(t2)
+	#Se iD não encontrado dá um erro
 	beq s0, t2, noID
 	#Aumento do contador do vagão
 	addi t1, t1, 1
