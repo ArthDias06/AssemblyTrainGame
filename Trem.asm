@@ -6,16 +6,11 @@
 
 #Descrição dos registradores usados
 #s0 - Armazenamento do endereço da cabeça da lista
-#s1 - registrador contendo o próximo ID
-#s3 - Registrador usado para percorrer a lista
-#s4 - Armazena o contador do vagão na listagem e na busca
-#t0 - usado para armazenar valor a ser comparado(nas instruções bne e beq)
-#t1 - Armazena o valor do tipo do vagão na busca
-#t2 - Verifica o próximo nó para saber se ele foi escolhido para ser removido
-#t3 - Armazena o valor do ID do próximo nó para saber se ele será removido e armazena o valor do nó próximo de t2 para passar para o s3
+#t0 - usado para armazenar valor a ser comparado(nas instruções bne e beq), auxilia na troca de ponteiros entre nas inserções,aponta para o próximo nó na remoção
+#t1 - Armazena o valor do contador do vagão, armazena o ID do próximo nó na remoção
+#t2 - Percorre a lista encadeada
 #a0 - Parâmetro de retorno da função setInfo
 #a1, a2, a3 - Parâmetros de chamada da função putInfo
-#sp - stack pointer, controla a pilha
 	.data
 	.align 0
 	
@@ -38,6 +33,7 @@ list:	.asciz "\n-----------Listando-----------"
 idPrint:.asciz "\nID do vagão: "
 tyPrint:.asciz "\nTipo do vagão: "
 wagon:	.asciz "\n\nVagão "
+	.align 2
 idCount:.word 0
 
 	.text
@@ -58,10 +54,6 @@ main:
 	sw t0, 4(s0)
 	#lista circular
 	sw s0, 8(s0)
-	#s3 servirá para percorrer a lista em diversas situações, ele começa sempre apontando o nó cabeça
-	add s3, zero, s0
-	#Contador do número de vagão
-	addi s4, zero, 0
 	#Início da UI do jogo
 	la a0, welcome
 	addi a7, zero, 4
@@ -104,29 +96,21 @@ case1:	jal ra, setInfo
 
 #Adiciona vagão no final
 case2:
-	#Empilha o s3
-	addi sp, sp, -4
-	sw s3, 0(sp)
-	#Percorre a lista
-	lw s3, 8(s3)
-	lw t0, 8(s3)
+	add t2, zero, s0
+runList:#Percorre a lista
+	lw t2, 8(t2)
+	lw t0, 8(t2)
 	#Verifica se a lista chegou no final
-	bne s0, t0, case2
-	#Vai ao case1 para coleta de informações e criação do nó
+	bne s0, t0, runList
+	#Vai ao setInfo para coleta de informações e criação do nó
 	jal ra, setInfo
-	sw a0, 8(s3)
+	sw a0, 8(t2)
 	sw s0, 8(a0)
-	#Desempilha o s3
-	lw s3, 0(sp)
-	addi sp, sp, 4
 	#Retorno ao menu do jogo
 	j game
 
 #Remove vagão por ID
 case3:
-	#Empilha s3
-	addi sp,sp, -4
-	sw s3, 0(sp)
 	la a0, idKill
 	addi a7, zero, 4
 	ecall
@@ -135,63 +119,53 @@ case3:
 	ecall
 	#Se o ID for menor que 0 ele é inválido
 	blt a0, zero, errorM
-	#t2 aponta para o próximo nó
-check:	lw t2, 8(s3)
-	#t3 contém o ID do próximo nó
-	lw t3, 0(t2)
+	#t2 percorre a lista
+	add t2, zero, s0
+	#t0 aponta para o próximo nó
+check:	lw t0, 8(t2)
+	#t1 contém o ID do próximo nó
+	lw t1, 0(t0)
 	#Se o ID do próximo nó for igual ao ID ele remove
-	beq t3, a0, remove
+	beq t1, a0, remove
 	#Se o ID for diferente s3 vai para o próximo nó
-	lw s3, 8(s3)
+	lw t2, 8(t2)
 	#Se s3 for igual a s0 ele deu uma volta completa na lista, então o ID não existe
-	beq s3, s0, noID
+	beq t2, s0, noID
 	#Volta para checar o novo nó atingido
 	j check
-remove:	lw t3, 8(t2)
+remove:	lw t1, 8(t0)
 	#O nó atual aponta para o nó que t2 apontava
-	sw t3, 8(s3)
+	sw t1, 8(t2)
 	#t2 aponta para NULL
-	sw zero, 8(t2)
-	#Desempilhar s3
-	lw s3, 0(sp)
-	addi sp,sp,4
+	sw zero, 8(t0)
 	#Retorno ao menu do jogo
 	j game
 
 #Listar todos os vagões
 case4:
-	#Empilha s3 e s4
-	addi sp,sp, -8
-	sw s3, 0(sp)
-	sw s4, 4(sp)
 	la a0, list
 	addi a7, zero, 4
 	ecall
-listing:lw s3, 8(s3)
-	#Se s0 = s3 ele deu uma volta e terminou a listagem
-	beq s0, s3, endList
-	#Definição dos parâmetros para a função
+	#t0 serve como contador do número de vagões
+	addi t1, zero, 0
+	#t2 percorre a lista
+	add t2, zero, s0
+listing:lw t2, 8(t2)
+	#Se s0 = t2 ele deu uma volta e terminou a listagem
+	beq s0, t2, print
 	#Aumento do contador do vagão
-	addi s4, s4, 1
-	add a1, zero, s4
-	lw a2, 0(s3)
-	lw a3, 4(s3)
+	addi t1, t1, 1
+	#Definição dos parâmetros para a função
+	add a1, zero, t1
+	lw a2, 0(t2)
+	lw a3, 4(t2)
 	#Vai para a função de printar informações do vagão
 	jal ra, putInfo
 	#Retorna para a listagem
 	j listing
-	#Desempilha o s3 e s4
-endList:lw s3, 0(sp)
-	lw s4, 4(sp)
-	addi sp, sp, 8
-	j print
 
 #Busca pelo ID
 case5:
-	#Empilha s3 e s4
-	addi sp,sp, -8
-	sw s3, 0(sp)
-	sw s4, 4(sp)
 	la a0, idSeek
 	addi a7, zero, 4
 	ecall
@@ -199,27 +173,25 @@ case5:
 	ecall
 	#Se o ID menor que 0 é inválido
 	blt a0, zero, errorM
+	#t1 é o contador de vagões
+	addi t1, zero, 0
+	add t2, zero, s0
 	#Percorre a lista
-seek:	lw s3, 8(s3)
-	beq s0, s3, noID
+seek:	lw t2, 8(t2)
+	beq s0, t2, noID
 	#Aumento do contador do vagão
-	addi s4, s4, 1
-	lw t0, 0(s3)
+	addi t1, t1, 1
+	lw t0, 0(t2)
 	#Se o ID atual for diferente do procurado ele continua a procura
 	bne t0, a0, seek
-	#Se os IDs forem iguais ele mostra as informações
+	add a1, zero, t1
 	la a0, found
 	addi a7, zero, 4
 	ecall
-	#Definição dos parâmetros da função
-	add a1, zero, s4
-	lw a2, 0(s3)
-	lw a3, 4(s3)
+	#Parâmetros da função
+	lw a2, 0(t2)
+	lw a3, 4(t2)
 	jal ra, putInfo
-	#Desempilha o s3
-	lw s3, 0(sp)
-	lw s4, 4(sp)
-	addi sp, sp, 8
 	j print
 
 #Encerra o programa
@@ -244,6 +216,7 @@ setInfo:#Print do menu de tipos
 	addi t0, zero, 4
 	#Se o input for maior que 4 dá erro
 	bgt a0, t0, errorM
+	#Passa o tipo de a0 para a1 para não perder durante a alocação
 	add a1, zero, a0
 	addi a0, zero, 12
 	#Alocação de memória do novo nó
@@ -319,9 +292,6 @@ errorM:	la a0, error
 noID:	la a0, miss
 	addi a7, zero, 4
 	ecall
-	#Desempilhar s3
-	lw s3, 0(sp)
-	addi sp,sp,4
 	j print
 
 #Mensagem base para o usuário apertar uma tecla para continuar
