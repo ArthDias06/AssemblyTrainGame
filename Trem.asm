@@ -13,7 +13,7 @@
 #a1, a2, a3 - Parâmetros de chamada da função putInfo
 	.data
 	.align 0
-
+	
 #Definição das strings usadas para melhora do ambiente
 welcome:.asciz "\n-----------Vamos começar o Jogo-----------"
 menu:   .asciz "\n\nComo jogar:\n1-Adiconar vagão no início\n2-Adiconar vagão no final\n3-Remover vagão por ID\n4-Listar trem\n5-Buscar vagão\n6-Sair\nDigite sua escolha: "
@@ -33,9 +33,6 @@ list:	.asciz "\n-----------Listando-----------"
 idPrint:.asciz "\nID do vagão: "
 tyPrint:.asciz "\nTipo do vagão: "
 wagon:	.asciz "\n\nVagão "
-sucRem:	.asciz "\nVagão remvoido com sucesso!"
-sucAdd:	.asciz "\nVagão de ID: "
-sucAdd2:.asciz "adicionado com sucesso!"
 	.align 2
 idCount:.word 0
 
@@ -95,7 +92,7 @@ case1:	jal ra, setInfo
 	#s0 aponta para o endereço do novo item
 	sw a0, 8(s0)
 	#Retorna para o menu do jogo
-	j print
+	j game
 
 #Adiciona vagão no final
 case2:
@@ -112,7 +109,7 @@ runList:#Percorre a lista
 	sw a0, 8(t2)
 	sw s0, 8(a0)
 	#Retorno ao menu do jogo
-	j print
+	j game
 
 #Remove vagão por ID
 case3:
@@ -143,11 +140,8 @@ remove:	lw t1, 8(t0)
 	sw t1, 8(t2)
 	#t2 aponta para NULL
 	sw zero, 8(t0)
-	#Mostra mensagem de sucesso de remoção
-	la a0, sucRem
-	addi a7, zero, 4
-	ecall
-	j print
+	#Retorno ao menu do jogo
+	j game
 
 #Listar todos os vagões
 case4:
@@ -237,20 +231,9 @@ setInfo:#Print do menu de tipos
 	lw t1, 0(t0)
 	#ID do novo item
 	sw t1, 0(a0)
-	#print de mensagem de sucesso de inserção
-	la a0, sucAdd
-	addi, a7, zero, 4
-	ecall
-	#print do ID do novo vagão
-	add a0, zero, t1
-	addi a7, zero, 1
-	ecall
-	la a0, sucAdd2
-	addi a7, zero, 4
-	ecall
 	#Aumento o contador do id
 	addi t1, t1, 1
-	#Guarda o vaor do item
+	#Guarda o valor do item
 	sw t1, 0(t0)
 	#Tipo do novo item
 	sw a1, 4(a0)
