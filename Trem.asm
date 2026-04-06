@@ -11,17 +11,16 @@
 #t2 - Percorre a lista encadeada
 #a0 - Parâmetro de retorno da função setInfo
 #a1, a2, a3 - Parâmetros de chamada da função putInfo
-#a4 - Recebe o valor de s0 ara passagem entre funções/procedimentos
 	.data
 	.align 0
-	
+
 #Definição das strings usadas para melhora do ambiente
 welcome:.asciz "\n-----------Vamos começar o Jogo-----------"
 menu:   .asciz "\n\nComo jogar:\n1-Adiconar vagão no início\n2-Adiconar vagão no final\n3-Remover vagão por ID\n4-Listar trem\n5-Buscar vagão\n6-Sair\nDigite sua escolha: "
 error:	.asciz "\nErro ao processar input"
 press:	.asciz "\nPressiona qualquer tecla para continuar: "
 miss:	.asciz "\nID não encontrado!"
-types:	.asciz "\n1-Carga\n2-Passageiro\n3-Combustível\nDigite o tipo do vagão: "
+types:	.asciz "\n1-Locomotiva\n2-Carga\n3-Passageiro\n4-Combustível\nDigite o tipo do vagão: "
 idSeek:	.asciz "\nDigite o ID desejado para a procura: "
 idKill:	.asciz "\nDigite o ID desejado para a remoção: "
 goodbye:.asciz "\n-----------Obrigado por jogar!-----------"
@@ -34,6 +33,9 @@ list:	.asciz "\n-----------Listando-----------"
 idPrint:.asciz "\nID do vagão: "
 tyPrint:.asciz "\nTipo do vagão: "
 wagon:	.asciz "\n\nVagão "
+sucRem:	.asciz "\nVagão remvoido com sucesso!"
+sucAdd:	.asciz "\nVagão de ID: "
+sucAdd2:.asciz "adicionado com sucesso!"
 	.align 2
 idCount:.word 0
 
@@ -59,8 +61,7 @@ main:
 	la a0, welcome
 	addi a7, zero, 4
 	ecall
-	#Passar o s0 para a4 como parâmetro
-	add a4, zero, s0
+
 game:	#Carrega o menu para o usuário
 	la a0, menu
 	addi a7, zero, 4
@@ -88,30 +89,30 @@ game:	#Carrega o menu para o usuário
 
 #Adiciona vagão no início
 case1:	jal ra, setInfo
-	#Agora o novo item aponta para o endereço que apontava a4
-	lw t0, 8(a4)
+	#Agora o novo item aponta para o endereço que apontava s0
+	lw t0, 8(s0)
 	sw t0, 8(a0)
-	#a4 aponta para o endereço do novo item
-	sw a0, 8(a4)
+	#s0 aponta para o endereço do novo item
+	sw a0, 8(s0)
 	#Retorna para o menu do jogo
-	j game
+	j print
 
 #Adiciona vagão no final
 case2:
 	#t2 percorre a lista
-	add t2, zero, a4
+	add t2, zero, s0
 runList:#Percorre a lista
 	lw t2, 8(t2)
 	lw t0, 8(t2)
 	#Verifica se a lista chegou no final
-	bne a4, t0, runList
+	bne s0, t0, runList
 	#Vai ao setInfo para coleta de informações e criação do nó
 	jal ra, setInfo
 	#Ajuste dos ponteiros
 	sw a0, 8(t2)
-	sw a4, 8(a0)
+	sw s0, 8(a0)
 	#Retorno ao menu do jogo
-	j game
+	j print
 
 #Remove vagão por ID
 case3:
@@ -124,17 +125,17 @@ case3:
 	#Se o ID for menor que 0 ele é inválido
 	blt a0, zero, errorM
 	#t2 percorre a lista
-	add t2, zero, a4
+	add t2, zero, s0
 	#t0 aponta para o próximo nó
 check:	lw t0, 8(t2)
 	#t1 contém o ID do próximo nó
 	lw t1, 0(t0)
 	#Se o ID do próximo nó for igual ao ID ele remove
 	beq t1, a0, remove
-	#Se o ID for diferente t2 vai para o próximo nó
+	#Se o ID for diferente s3 vai para o próximo nó
 	lw t2, 8(t2)
-	#Se t2 for igual a a4 ele deu uma volta completa na lista, então o ID não existe
-	beq t2, a4, noID
+	#Se s3 for igual a s0 ele deu uma volta completa na lista, então o ID não existe
+	beq t2, s0, noID
 	#Volta para checar o novo nó atingido
 	j check
 remove:	lw t1, 8(t0)
@@ -142,8 +143,11 @@ remove:	lw t1, 8(t0)
 	sw t1, 8(t2)
 	#t2 aponta para NULL
 	sw zero, 8(t0)
-	#Retorno ao menu do jogo
-	j game
+	#Mostra mensagem de sucesso de remoção
+	la a0, sucRem
+	addi a7, zero, 4
+	ecall
+	j print
 
 #Listar todos os vagões
 case4:
@@ -153,10 +157,10 @@ case4:
 	#t0 serve como contador do número de vagões
 	addi t1, zero, 0
 	#t2 percorre a lista
-	add t2, zero, a4
+	add t2, zero, s0
 listing:lw t2, 8(t2)
-	#Se a4 = t2 ele deu uma volta e terminou a listagem
-	beq a4, t2, print
+	#Se s0 = t2 ele deu uma volta e terminou a listagem
+	beq s0, t2, print
 	#Aumento do contador do vagão
 	addi t1, t1, 1
 	#Definição dos parâmetros para a função
@@ -180,11 +184,11 @@ case5:
 	#t1 é o contador de vagões
 	addi t1, zero, 0
 	#t2 percorre a lista
-	add t2, zero, a4
+	add t2, zero, s0
 	#Percorre a lista
 seek:	lw t2, 8(t2)
 	#Se iD não encontrado dá um erro
-	beq a4, t2, noID
+	beq s0, t2, noID
 	#Aumento do contador do vagão
 	addi t1, t1, 1
 	lw t0, 0(t2)
@@ -219,8 +223,8 @@ setInfo:#Print do menu de tipos
 	addi t0, zero, 1
 	#Se o input for menor que 1 dá erro
 	blt a0, t0, errorM
-	addi t0, zero, 3
-	#Se o input for maior que 3 dá erro
+	addi t0, zero, 4
+	#Se o input for maior que 4 dá erro
 	bgt a0, t0, errorM
 	#Passa o tipo de a0 para a1 para não perder durante a alocação
 	add a1, zero, a0
@@ -233,6 +237,17 @@ setInfo:#Print do menu de tipos
 	lw t1, 0(t0)
 	#ID do novo item
 	sw t1, 0(a0)
+	#print de mensagem de sucesso de inserção
+	la a0, sucAdd
+	addi, a7, zero, 4
+	ecall
+	#print do ID do novo vagão
+	add a0, zero, t1
+	addi a7, zero, 1
+	ecall
+	la a0, sucAdd2
+	addi a7, zero, 4
+	ecall
 	#Aumento o contador do id
 	addi t1, t1, 1
 	#Guarda o vaor do item
@@ -261,15 +276,22 @@ putInfo:#Print do número do vagão
 	addi a7, zero, 4
 	ecall
 	#Print do tipo por extenso
-	#Print do tipo carga
+	#Print do tipo locomotiva
 	addi t0, zero, 1
-	bne t0, a3, person
+	bne t0, a3, load
+	la a0, locomot
+	addi a7, zero, 4
+	ecall
+	jr ra
+	#Print do tipo Carga
+load:	addi t0, zero, 2
+	bne a3, t0, person
 	la a0, cargo
 	addi a7, zero, 4
 	ecall
 	jr ra
 	#Print do tipo passageiro
-person:	addi t0, zero, 2
+person:	addi t0, zero, 3
 	bne a3, t0, gas
 	la a0, passeng
 	addi a7, zero, 4
