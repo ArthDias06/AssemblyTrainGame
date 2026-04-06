@@ -21,7 +21,7 @@ menu:   .asciz "\n\nComo jogar:\n1-Adiconar vagão no início\n2-Adiconar vagão
 error:	.asciz "\nErro ao processar input"
 press:	.asciz "\nPressiona qualquer tecla para continuar: "
 miss:	.asciz "\nID não encontrado!"
-types:	.asciz "\n1-Locomotiva\n2-Carga\n3-Passageiro\n4-Combustível\nDigite o tipo do vagão: "
+types:	.asciz "\n1-Carga\n2-Passageiro\n3-Combustível\nDigite o tipo do vagão: "
 idSeek:	.asciz "\nDigite o ID desejado para a procura: "
 idKill:	.asciz "\nDigite o ID desejado para a remoção: "
 goodbye:.asciz "\n-----------Obrigado por jogar!-----------"
@@ -219,8 +219,8 @@ setInfo:#Print do menu de tipos
 	addi t0, zero, 1
 	#Se o input for menor que 1 dá erro
 	blt a0, t0, errorM
-	addi t0, zero, 4
-	#Se o input for maior que 4 dá erro
+	addi t0, zero, 3
+	#Se o input for maior que 3 dá erro
 	bgt a0, t0, errorM
 	#Passa o tipo de a0 para a1 para não perder durante a alocação
 	add a1, zero, a0
@@ -261,22 +261,15 @@ putInfo:#Print do número do vagão
 	addi a7, zero, 4
 	ecall
 	#Print do tipo por extenso
-	#Print do tipo locomotiva
+	#Print do tipo carga
 	addi t0, zero, 1
-	bne t0, a3, load
-	la a0, locomot
-	addi a7, zero, 4
-	ecall
-	jr ra
-	#Print do tipo Carga
-load:	addi t0, zero, 2
-	bne a3, t0, person
+	bne t0, a3, person
 	la a0, cargo
 	addi a7, zero, 4
 	ecall
 	jr ra
 	#Print do tipo passageiro
-person:	addi t0, zero, 3
+person:	addi t0, zero, 2
 	bne a3, t0, gas
 	la a0, passeng
 	addi a7, zero, 4
