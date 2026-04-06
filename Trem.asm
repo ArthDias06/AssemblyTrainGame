@@ -11,6 +11,7 @@
 #t2 - Percorre a lista encadeada
 #a0 - Parâmetro de retorno da função setInfo
 #a1, a2, a3 - Parâmetros de chamada da função putInfo
+#a4 - Recebe o valor de s0 ara passagem entre funções/procedimentos
 	.data
 	.align 0
 	
@@ -58,7 +59,8 @@ main:
 	la a0, welcome
 	addi a7, zero, 4
 	ecall
-
+	#Passar o s0 para a4 como parâmetro
+	add a4, zero, s0
 game:	#Carrega o menu para o usuário
 	la a0, menu
 	addi a7, zero, 4
@@ -86,28 +88,28 @@ game:	#Carrega o menu para o usuário
 
 #Adiciona vagão no início
 case1:	jal ra, setInfo
-	#Agora o novo item aponta para o endereço que apontava s0
-	lw t0, 8(s0)
+	#Agora o novo item aponta para o endereço que apontava a4
+	lw t0, 8(a4)
 	sw t0, 8(a0)
-	#s0 aponta para o endereço do novo item
-	sw a0, 8(s0)
+	#a4 aponta para o endereço do novo item
+	sw a0, 8(a4)
 	#Retorna para o menu do jogo
 	j game
 
 #Adiciona vagão no final
 case2:
 	#t2 percorre a lista
-	add t2, zero, s0
+	add t2, zero, a4
 runList:#Percorre a lista
 	lw t2, 8(t2)
 	lw t0, 8(t2)
 	#Verifica se a lista chegou no final
-	bne s0, t0, runList
+	bne a4, t0, runList
 	#Vai ao setInfo para coleta de informações e criação do nó
 	jal ra, setInfo
 	#Ajuste dos ponteiros
 	sw a0, 8(t2)
-	sw s0, 8(a0)
+	sw a4, 8(a0)
 	#Retorno ao menu do jogo
 	j game
 
@@ -122,17 +124,17 @@ case3:
 	#Se o ID for menor que 0 ele é inválido
 	blt a0, zero, errorM
 	#t2 percorre a lista
-	add t2, zero, s0
+	add t2, zero, a4
 	#t0 aponta para o próximo nó
 check:	lw t0, 8(t2)
 	#t1 contém o ID do próximo nó
 	lw t1, 0(t0)
 	#Se o ID do próximo nó for igual ao ID ele remove
 	beq t1, a0, remove
-	#Se o ID for diferente s3 vai para o próximo nó
+	#Se o ID for diferente t2 vai para o próximo nó
 	lw t2, 8(t2)
-	#Se s3 for igual a s0 ele deu uma volta completa na lista, então o ID não existe
-	beq t2, s0, noID
+	#Se t2 for igual a a4 ele deu uma volta completa na lista, então o ID não existe
+	beq t2, a4, noID
 	#Volta para checar o novo nó atingido
 	j check
 remove:	lw t1, 8(t0)
@@ -151,10 +153,10 @@ case4:
 	#t0 serve como contador do número de vagões
 	addi t1, zero, 0
 	#t2 percorre a lista
-	add t2, zero, s0
+	add t2, zero, a4
 listing:lw t2, 8(t2)
-	#Se s0 = t2 ele deu uma volta e terminou a listagem
-	beq s0, t2, print
+	#Se a4 = t2 ele deu uma volta e terminou a listagem
+	beq a4, t2, print
 	#Aumento do contador do vagão
 	addi t1, t1, 1
 	#Definição dos parâmetros para a função
@@ -178,11 +180,11 @@ case5:
 	#t1 é o contador de vagões
 	addi t1, zero, 0
 	#t2 percorre a lista
-	add t2, zero, s0
+	add t2, zero, a4
 	#Percorre a lista
 seek:	lw t2, 8(t2)
 	#Se iD não encontrado dá um erro
-	beq s0, t2, noID
+	beq a4, t2, noID
 	#Aumento do contador do vagão
 	addi t1, t1, 1
 	lw t0, 0(t2)
