@@ -1,38 +1,41 @@
 #Arthur de Castro Dias - 16855302
-#Cleyton Jos√© Rodrigues Macedo - 16821725
+#Cleyton JosÈ Rodrigues Macedo - 16821725
 #Felipe Gausmann Socolowski - 16812461
 #Gabriel Carraro Salzedas - 16827905
 
 
-#Descri√ß√£o dos registradores usados
-#s0 - Armazenamento do endere√ßo da cabe√ßa da lista
-#t0 - usado para armazenar valor a ser comparado(nas instru√ß√µes bne e beq), auxilia na troca de ponteiros entre nas inser√ß√µes,aponta para o pr√≥ximo n√≥ na remo√ß√£o
-#t1 - Armazena o valor do contador do vag√£o, armazena o ID do pr√≥ximo n√≥ na remo√ß√£o
+#DescriÁ„o dos registradores usados
+#s0 - Armazenamento do endereÁo da cabeÁa da lista
+#t0 - usado para armazenar valor a ser comparado(nas instruÁıes bne e beq), auxilia na troca de ponteiros entre nas inserÁıes,aponta para o prÛximo nÛ na remoÁ„o
+#t1 - Armazena o valor do contador do vag„o, armazena o ID do prÛximo nÛ na remoÁ„o
 #t2 - Percorre a lista encadeada
-#a0 - Par√¢metro de retorno da fun√ß√£o setInfo
-#a1, a2, a3 - Par√¢metros de chamada da fun√ß√£o putInfo
+#a0 - Par‚metro de retorno da funÁ„o setInfo
+#a1, a2, a3 - Par‚metros de chamada da funÁ„o putInfo
 	.data
 	.align 0
 	
-#Defini√ß√£o das strings usadas para melhora do ambiente
-welcome:.asciz "\n-----------Vamos come√ßar o Jogo-----------"
-menu:   .asciz "\n\nComo jogar:\n1-Adiconar vag√£o no in√≠cio\n2-Adiconar vag√£o no final\n3-Remover vag√£o por ID\n4-Listar trem\n5-Buscar vag√£o\n6-Sair\nDigite sua escolha: "
+#DefiniÁ„o das strings usadas para melhora do ambiente
+welcome:.asciz "\n-----------Vamos comeÁar o Jogo-----------"
+menu:   .asciz "\n\nComo jogar:\n1-Adiconar vag„o no inÌcio\n2-Adiconar vag„o no final\n3-Remover vag„o por ID\n4-Listar trem\n5-Buscar vag„o\n6-Sair\nDigite sua escolha: "
 error:	.asciz "\nErro ao processar input"
 press:	.asciz "\nPressiona qualquer tecla para continuar: "
-miss:	.asciz "\nID n√£o encontrado!"
-types:	.asciz "\n1-Locomotiva\n2-Carga\n3-Passageiro\n4-Combust√≠vel\nDigite o tipo do vag√£o: "
+miss:	.asciz "\nID n„o encontrado!"
+types:	.asciz "\n1-Locomotiva\n2-Carga\n3-Passageiro\n4-CombustÌvel\nDigite o tipo do vag„o: "
 idSeek:	.asciz "\nDigite o ID desejado para a procura: "
-idKill:	.asciz "\nDigite o ID desejado para a remo√ß√£o: "
+idKill:	.asciz "\nDigite o ID desejado para a remoÁ„o: "
 goodbye:.asciz "\n-----------Obrigado por jogar!-----------"
 found:	.asciz "\n-----------Encontrado------------"
 cargo:	.asciz "Carga"
-fuel:	.asciz "Combust√≠vel"
+fuel:	.asciz "CombustÌvel"
 passeng:.asciz "Passageiro"
 locomot:.asciz "Locomotiva"
 list:	.asciz "\n-----------Listando-----------"
-idPrint:.asciz "\nID do vag√£o: "
-tyPrint:.asciz "\nTipo do vag√£o: "
-wagon:	.asciz "\n\nVag√£o "
+idPrint:.asciz "\nID do vag„o: "
+tyPrint:.asciz "\nTipo do vag„o: "
+wagon:	.asciz "\n\nVag„o "
+sucRem:	.asciz "\nVag„o removido com sucesso!"
+sucAdd:	.asciz "\nVag„o de ID: "
+sucAdd2:.asciz " adicionado com sucesso!"
 	.align 2
 idCount:.word 0
 
@@ -40,30 +43,30 @@ idCount:.word 0
 	.align 2
 	.globl main
 main:
-	# Ser√£o alocados 12 bytes(4 para cada campo)
+	# Ser„o alocados 12 bytes(4 para cada campo)
 	addi a0, zero, 12
-	#Aloca√ß√£o de mem√≥ria na heap, criando a cabe√ßa da lista ligada
+	#AlocaÁ„o de memÛria na heap, criando a cabeÁa da lista ligada
 	addi a7, zero, 9
 	ecall
-	#s0 aponta para a cabe√ßa do trem
+	#s0 aponta para a cabeÁa do trem
 	add s0, zero, a0
 	addi t0, zero, -1
-	#A cabe√ßa come√ßa com o ID -1, ela n√£o poder√° ser acessada pelo usu√°rio
+	#A cabeÁa comeÁa com o ID -1, ela n„o poder· ser acessada pelo usu·rio
 	sw t0, 0(s0)
-	# O tipo da cabe√ßa √© -1 tamb√©m
+	# O tipo da cabeÁa È -1 tambÈm
 	sw t0, 4(s0)
 	#lista circular
 	sw s0, 8(s0)
-	#In√≠cio da UI do jogo
+	#InÌcio da UI do jogo
 	la a0, welcome
 	addi a7, zero, 4
 	ecall
 
-game:	#Carrega o menu para o usu√°rio
+game:	#Carrega o menu para o usu·rio
 	la a0, menu
 	addi a7, zero, 4
 	ecall
-	#L√™ input do usu√°rio
+	#L√™ input do usu·rio
 	addi a7, zero, 5
 	ecall
 	addi t0, zero, 1
@@ -84,17 +87,17 @@ game:	#Carrega o menu para o usu√°rio
 	beq a0, t0, case5
 
 
-#Adiciona vag√£o no in√≠cio
+#Adiciona vag„o no inÌcio
 case1:	jal ra, setInfo
-	#Agora o novo item aponta para o endere√ßo que apontava s0
+	#Agora o novo item aponta para o endereÁo que apontava s0
 	lw t0, 8(s0)
-	sw t0, 8(a0)
-	#s0 aponta para o endere√ßo do novo item
-	sw a0, 8(s0)
+	sw t0, 8(a2)
+	#s0 aponta para o endereÁo do novo item
+	sw a2, 8(s0)
 	#Retorna para o menu do jogo
-	j game
+	j print
 
-#Adiciona vag√£o no final
+#Adiciona vag„o no final
 case2:
 	#t2 percorre a lista
 	add t2, zero, s0
@@ -103,65 +106,69 @@ runList:#Percorre a lista
 	lw t0, 8(t2)
 	#Verifica se a lista chegou no final
 	bne s0, t0, runList
-	#Vai ao setInfo para coleta de informa√ß√µes e cria√ß√£o do n√≥
+	#Vai ao setInfo para coleta de informaÁıes e criaÁ„o do nÛ
 	jal ra, setInfo
 	#Ajuste dos ponteiros
-	sw a0, 8(t2)
-	sw s0, 8(a0)
+	sw a2, 8(t2)
+	sw s0, 8(a2)
 	#Retorno ao menu do jogo
-	j game
+	j print
 
-#Remove vag√£o por ID
+#Remove vag„o por ID
 case3:
 	la a0, idKill
 	addi a7, zero, 4
 	ecall
-	#L√™ valor do ID que ser√° removido
+	#L√™ valor do ID que ser· removido
 	addi a7, zero, 5
 	ecall
-	#Se o ID for menor que 0 ele √© inv√°lido
+	#Se o ID for menor que 0 ele È inv·lido
 	blt a0, zero, errorM
 	#t2 percorre a lista
 	add t2, zero, s0
-	#t0 aponta para o pr√≥ximo n√≥
+	#t0 aponta para o prÛximo nÛ
 check:	lw t0, 8(t2)
-	#t1 cont√©m o ID do pr√≥ximo n√≥
+	#t1 contÈm o ID do prÛximo nÛ
 	lw t1, 0(t0)
-	#Se o ID do pr√≥ximo n√≥ for igual ao ID ele remove
+	#Se o ID do prÛximo nÛ for igual ao ID ele remove
 	beq t1, a0, remove
-	#Se o ID for diferente s3 vai para o pr√≥ximo n√≥
+	#Se o ID for diferente s3 vai para o prÛximo nÛ
 	lw t2, 8(t2)
-	#Se s3 for igual a s0 ele deu uma volta completa na lista, ent√£o o ID n√£o existe
+	#Se s3 for igual a s0 ele deu uma volta completa na lista, ent„o o ID n„o existe
 	beq t2, s0, noID
-	#Volta para checar o novo n√≥ atingido
+	#Volta para checar o novo nÛ atingido
 	j check
 remove:	lw t1, 8(t0)
-	#O n√≥ atual aponta para o n√≥ que t2 apontava
+	#O nÛ atual aponta para o nÛ que t2 apontava
 	sw t1, 8(t2)
 	#t2 aponta para NULL
 	sw zero, 8(t0)
+	#Mensagem de sucesso na remoÁ„o
+	la a0, sucRem
+	addi a7, zero, 4
+	ecall
 	#Retorno ao menu do jogo
-	j game
+	j print
 
-#Listar todos os vag√µes
+#Listar todos os vagıes
 case4:
 	la a0, list
 	addi a7, zero, 4
 	ecall
-	#t0 serve como contador do n√∫mero de vag√µes
+	#t0 serve como contador do n˙mero de vagıes
 	addi t1, zero, 0
 	#t2 percorre a lista
 	add t2, zero, s0
 listing:lw t2, 8(t2)
 	#Se s0 = t2 ele deu uma volta e terminou a listagem
 	beq s0, t2, print
-	#Aumento do contador do vag√£o
+	#Aumento do contador do vag„o
 	addi t1, t1, 1
-	#Defini√ß√£o dos par√¢metros para a fun√ß√£o
+	#DefiniÁ„o dos par‚metros para a funÁ„o
 	add a1, zero, t1
 	lw a2, 0(t2)
 	lw a3, 4(t2)
-	#Vai para a fun√ß√£o de printar informa√ß√µes do vag√£o
+	#Vai para a funÁ„o de printar informaÁıes do vag„o
 	jal ra, putInfo
 	#Retorna para a listagem
 	j listing
@@ -173,17 +180,17 @@ case5:
 	ecall
 	addi a7, zero, 5
 	ecall
-	#Se o ID menor que 0 √© inv√°lido
+	#Se o ID menor que 0 È inv·lido
 	blt a0, zero, errorM
-	#t1 √© o contador de vag√µes
+	#t1 È o contador de vagıes
 	addi t1, zero, 0
 	#t2 percorre a lista
 	add t2, zero, s0
 	#Percorre a lista
 seek:	lw t2, 8(t2)
-	#Se iD n√£o encontrado d√° um erro
+	#Se iD n„o encontrado d· um erro
 	beq s0, t2, noID
-	#Aumento do contador do vag√£o
+	#Aumento do contador do vag„o
 	addi t1, t1, 1
 	lw t0, 0(t2)
 	#Se o ID atual for diferente do procurado ele continua a procura
@@ -192,7 +199,7 @@ seek:	lw t2, 8(t2)
 	la a0, found
 	addi a7, zero, 4
 	ecall
-	#Par√¢metros da fun√ß√£o
+	#Par‚metros da funÁ„o
 	lw a2, 0(t2)
 	lw a3, 4(t2)
 	jal ra, putInfo
@@ -202,59 +209,71 @@ seek:	lw t2, 8(t2)
 case6:	la a0, goodbye
 	addi a7, zero, 4
 	ecall
-	#T√©rmino da execu√ß√£o
+	#TÈrmino da execuÁ„o
 	addi a7, zero, 10
 	ecall
 
-#Fun√ß√£o para cria√ß√£o do novo n√≥
+#FunÁ„o para criaÁ„o do novo nÛ
 setInfo:#Print do menu de tipos
 	la a0, types
 	addi a7, zero, 4
 	ecall
-	#Recebimento do input do usu√°rio
+	#Recebimento do input do usu·rio
 	addi a7, zero, 5
 	ecall
 	addi t0, zero, 1
-	#Se o input for menor que 1 d√° erro
+	#Se o input for menor que 1 d· erro
 	blt a0, t0, errorM
 	addi t0, zero, 4
-	#Se o input for maior que 4 d√° erro
+	#Se o input for maior que 4 d· erro
 	bgt a0, t0, errorM
-	#Passa o tipo de a0 para a1 para n√£o perder durante a aloca√ß√£o
+	#Passa o tipo de a0 para a1 para n„o perder durante a alocaÁ„o
 	add a1, zero, a0
 	addi a0, zero, 12
-	#Aloca√ß√£o de mem√≥ria do novo n√≥
+	#AlocaÁ„o de memÛria do novo n„o
 	addi a7, zero, 9
 	ecall
+	#Como a0 ser· usado depois, passa o endereÁo do nÛ para a2
+	add a2, zero, a0
 	la t0, idCount
 	#Pega o valor de idCount
 	lw t1, 0(t0)
 	#ID do novo item
-	sw t1, 0(a0)
+	sw t1, 0(a2)
+	#Mensagem de sucesso na inserÁ„o
+	la a0, sucAdd
+	addi a7, zero, 4
+	ecall
+	add a0, zero, t1
+	addi a7, zero, 1
+	ecall
+	la a0, sucAdd2
+	addi a7, zero, 4
+	ecall
 	#Aumento o contador do id
 	addi t1, t1, 1
 	#Guarda o valor do item
 	sw t1, 0(t0)
 	#Tipo do novo item
-	sw a1, 4(a0)
+	sw a1, 4(a2)
 	jr ra
 
-#Print das informa√ß√µes do vag√£o
-putInfo:#Print do n√∫mero do vag√£o
+#Print das informaÁıes do vag„o
+putInfo:#Print do n˙mero do vag„o
 	la a0, wagon
 	addi a7, zero, 4
 	ecall
 	add a0, zero, a1
 	addi a7, zero, 1
 	ecall
-	#Print do ID do vag√£o
+	#Print do ID do vag„o
 	la a0, idPrint
 	addi a7, zero, 4
 	ecall
 	add a0, zero, a2
 	addi a7, zero, 1
 	ecall
-	#Print do tipo do vag√£o
+	#Print do tipo do vag„o
 	la a0, tyPrint
 	addi a7, zero, 4
 	ecall
@@ -280,7 +299,7 @@ person:	addi t0, zero, 3
 	addi a7, zero, 4
 	ecall
 	jr ra
-	#Print do tipo combust√≠vel
+	#Print do tipo combustÌvel
 gas:	la a0, fuel
 	addi a7, zero, 4
 	ecall
@@ -292,17 +311,17 @@ errorM:	la a0, error
 	ecall
 	j print
 
-#Imprime mensagem caso ID pedido n√£o exista
+#Imprime mensagem caso ID pedido n„o exista
 noID:	la a0, miss
 	addi a7, zero, 4
 	ecall
 	j print
 
-#Mensagem base para o usu√°rio apertar uma tecla para continuar
+#Mensagem base para o usu·rio apertar uma tecla para continuar
 print:	la a0, press
 	addi a7, zero, 4
 	ecall
-	#Recebe um char do usu√°rio para ele continuar a execu√ß√£o
+	#Recebe um char do usu·rio para ele continuar a execuÁ„o
 	addi a7, zero, 12
 	ecall
 	j game
